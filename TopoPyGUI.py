@@ -8,7 +8,6 @@
 # Version: 1
 
 ## Import section
-
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.mlab as ml
@@ -18,31 +17,38 @@ from tkinter.filedialog import askopenfilename, asksaveasfilename
 import tkinter.messagebox
 import os
 
+## a range function for float
+def frange(x, y, jump):
+    if (x < y) and (jump > 0):
+        while x < y:
+            yield x
+            x += jump
+    elif (x > y) and (jump < 0):
+        while x > y:
+            yield x
+            x += jump
+    else:
+        return None
+
+## AppTopoGui class - main class of the application
 class AppTopoGui(tk.Frame):
     
-    # Constructor
+    ## Constructor
     def __init__(self, parent):
         
         tk.Frame.__init__(self, parent)
         self.parent = parent
         self.parent.title('TopoPy')
-        self.parent.iconbitmap('application_edit.ico') # put that line in the constructor
+        self.parent.iconbitmap('application_edit.ico')
         
         self.listx  = []     # list of ids 
         self.listy  = []     # list containing the x coordinates of the points
         self.listz  = []     # list containing the y coordinates of the points
         self.listid = []     # list containing the z coordinates of the points
         
-        #self.scale     = 200 # desired scale when saving the file
-        #self.nx        = 500 # number of interpolated points (x)
-        #self.ny        = 500 # number of interpolated points (y)
-        #self.extension = 2   # spaces between borders and figure (in meters)
-        #self.delta_l   = 20  # difference in meters between 2 contour lines
-        #self.size_ids  = 7   # font size of the points labels
-        
         self.initialize_gui()
 
-    # Initialize the interface
+    ## Initialize the interface
     def initialize_gui(self):
     
         # layout manager
@@ -51,96 +57,106 @@ class AppTopoGui(tk.Frame):
         # ... creation load button
         loadButton = tk.Button(self, text="Load data", command=self.load_file)
         loadButton.grid(column=0, row=0, columnspan=4, sticky='E'+'W')
-        
-        # ... creation draw button
-        drawButton = tk.Button(self, text="Draw map", command=self.draw_map)
-        drawButton.grid(column=0, row=1, columnspan=4, sticky='E'+'W')
                 
-        # ... creation bouton sauvegarde
-        saveButton = tk.Button(self, text="Save", command=self.save_map)
-        saveButton.grid(column=0,row=2,columnspan=4,sticky='E'+'W')        
-        
         # ... create label for scale
         scaleLabel = tk.Label(self, text="Scale: 1/", anchor="center")
-        scaleLabel.grid(column=0, row=3, sticky='E')
+        scaleLabel.grid(column=0, row=1, sticky='E')
         
         # ... create entry for scale
         self.scaleEntryVariable = tk.IntVar()
         self.scaleEntry = tk.Entry(self, textvariable=self.scaleEntryVariable)
-        self.scaleEntry.grid(column=1, row=3, columnspan=3,sticky='E'+'W')
+        self.scaleEntry.grid(column=1, row=1, columnspan=3,sticky='E'+'W')
         self.scaleEntryVariable.set("200")
         
         # ... create label for image dpi
         dpiLabel = tk.Label(self, text="Resolution (dpi):")
-        dpiLabel.grid(column=0, row=4, sticky='E')
+        dpiLabel.grid(column=0, row=2, sticky='E')
         
         # ... creating the radio buttons for selecting the image dpi
         self.dpiVar = tk.IntVar()
-        tk.Radiobutton(self, text="100", padx = 20, variable=self.dpiVar, value=100).grid(column=1,row=4)
-        tk.Radiobutton(self, text="150", padx = 20, variable=self.dpiVar, value=150).grid(column=2,row=4)
-        tk.Radiobutton(self, text="300", padx = 20, variable=self.dpiVar, value=300).grid(column=3,row=4)
+        tk.Radiobutton(self, text="100", padx = 20, variable=self.dpiVar, value=100).grid(column=1,row=2)
+        tk.Radiobutton(self, text="150", padx = 20, variable=self.dpiVar, value=150).grid(column=2,row=2)
+        tk.Radiobutton(self, text="300", padx = 20, variable=self.dpiVar, value=300).grid(column=3,row=2)
         self.dpiVar.set(150)
         
         # ... creation label plot ids
         plotIdsLabel = tk.Label(self, text="Show points id:")
-        plotIdsLabel.grid(column=0, row=5, sticky='E')
+        plotIdsLabel.grid(column=0, row=3, sticky='E')
         
         # ... creating the radio buttons for showing/hiding points id
         self.plotId = tk.IntVar()
-        tk.Radiobutton(self, text="Yes", padx = 20, variable=self.plotId, value=1).grid(column=1,row=5)
-        tk.Radiobutton(self, text="No",  padx = 20, variable=self.plotId, value=0).grid(column=2,row=5)
+        tk.Radiobutton(self, text="Yes", padx = 20, variable=self.plotId, value=1).grid(column=1,row=3)
+        tk.Radiobutton(self, text="No",  padx = 20, variable=self.plotId, value=0).grid(column=2,row=3)
         
         # ... create label for font size
         fontLabel = tk.Label(self, text="Font size:", anchor="center")
-        fontLabel.grid(column=0, row=6, sticky='E')
+        fontLabel.grid(column=0, row=4, sticky='E')
         
         # ... create entry for font size
         self.fontEntryVariable = tk.IntVar()
         self.fontEntry = tk.Entry(self, textvariable=self.fontEntryVariable)
-        self.fontEntry.grid(column=1, row=6, columnspan=3,sticky='E'+'W')
+        self.fontEntry.grid(column=1, row=4, columnspan=3,sticky='E'+'W')
         self.fontEntryVariable.set("10")
+
+        # ... create label for base contour line
+        base_lLabel = tk.Label(self, text="Base altimetric level (meters):", anchor="center")
+        base_lLabel.grid(column=0, row=5, sticky='E')
+        
+        # ... create entry for base contour line
+        self.base_lEntryVariable = tk.IntVar()
+        self.base_lEntry = tk.Entry(self, textvariable=self.base_lEntryVariable)
+        self.base_lEntry.grid(column=1, row=5, columnspan=3,sticky='E'+'W')
+        self.base_lEntryVariable.set("100")
 
         # ... create label for delta_l
         delta_lLabel = tk.Label(self, text="Altimetric difference between 2 contour lines (meters):", anchor="center")
-        delta_lLabel.grid(column=0, row=7, sticky='E')
+        delta_lLabel.grid(column=0, row=6, sticky='E')
         
         # ... create entry for delta_l
-        self.delta_lEntryVariable = tk.IntVar()
+        self.delta_lEntryVariable = tk.DoubleVar()
         self.delta_lEntry = tk.Entry(self, textvariable=self.delta_lEntryVariable)
-        self.delta_lEntry.grid(column=1, row=7, columnspan=3,sticky='E'+'W')
-        self.delta_lEntryVariable.set("20")
-
+        self.delta_lEntry.grid(column=1, row=6, columnspan=3,sticky='E'+'W')
+        self.delta_lEntryVariable.set("0.50")
+        
         # ... create label for extension
         extensionLabel = tk.Label(self, text="Minimum distance between the borders and the contour lines (meters):", anchor="center")
-        extensionLabel.grid(column=0, row=8, sticky='E')
+        extensionLabel.grid(column=0, row=7, sticky='E')
         
         # ... create entry for extension
         self.extensionEntryVariable = tk.IntVar()
         self.extensionEntry = tk.Entry(self, textvariable=self.extensionEntryVariable)
-        self.extensionEntry.grid(column=1, row=8, columnspan=3,sticky='E'+'W')
+        self.extensionEntry.grid(column=1, row=7, columnspan=3,sticky='E'+'W')
         self.extensionEntryVariable.set("2")
 
         # ... create label for nx x ny
         nxnyLabel = tk.Label(self, text="Dimension of the interpolation grid:", anchor="center")
-        nxnyLabel.grid(column=0, row=9, sticky='E')
+        nxnyLabel.grid(column=0, row=8, sticky='E')
         nxny2Label = tk.Label(self, text=" x ", anchor="center")
-        nxny2Label.grid(column=2, row=9, sticky='E'+'W')
+        nxny2Label.grid(column=2, row=8, sticky='E'+'W')
         
         # ... create entry for nx
         self.nxEntryVariable = tk.IntVar()
         self.nxEntry = tk.Entry(self, textvariable=self.nxEntryVariable)
-        self.nxEntry.grid(column=1, row=9, columnspan=1,sticky='E'+'W')
+        self.nxEntry.grid(column=1, row=8, columnspan=1,sticky='E'+'W')
         self.nxEntryVariable.set("500")
         
         # ... create entry for ny
         self.nyEntryVariable = tk.IntVar()
         self.nyEntry = tk.Entry(self, textvariable=self.nyEntryVariable)
-        self.nyEntry.grid(column=3, row=9, columnspan=1,sticky='E'+'W')
+        self.nyEntry.grid(column=3, row=8, columnspan=1,sticky='E'+'W')
         self.nyEntryVariable.set("500")
+        
+        # ... creation draw button
+        drawButton = tk.Button(self, text="Draw map", command=self.draw_map)
+        drawButton.grid(column=0, row=9, columnspan=4, sticky='E'+'W')
+                
+        # ... creation save button
+        saveButton = tk.Button(self, text="Save", command=self.save_map)
+        saveButton.grid(column=0,row=10,columnspan=4,sticky='E'+'W')        
         
         # ... creation bouton quit
         quitButton = tk.Button(self, text="Quit",command=self.quit_app)
-        quitButton.grid(column=0,row=10,columnspan=4,sticky='E'+'W')
+        quitButton.grid(column=0,row=11,columnspan=4,sticky='E'+'W')
                 
         # empeche de redimensionner verticalement
         self.parent.resizable(False, False)
@@ -154,6 +170,7 @@ class AppTopoGui(tk.Frame):
         self.scaleEntry.focus_set()
         self.scaleEntry.selection_range(0, tk.END)
        
+    ## quitting the app
     def quit_app(self):
         
         plt.close('all')
@@ -161,6 +178,7 @@ class AppTopoGui(tk.Frame):
         top.quit()
         self.parent.destroy()
     
+    ## clearing the data
     def clear_data(self):
         
         self.listid.clear()
@@ -168,6 +186,7 @@ class AppTopoGui(tk.Frame):
         self.listy.clear()
         self.listz.clear()
     
+    ## loading a map
     def load_file(self):
         
         # getting input file name and path
@@ -191,7 +210,8 @@ class AppTopoGui(tk.Frame):
                     print('Error while reading input file... maybe something wrong with it?')
                     tk.messagebox.showerror(parent=self, title='Error while reading input file', message = 'Maybe something is wrong with the input file?')
                     return None
-            
+    
+    ## drawing the current map
     def draw_map(self):
         
         if not self.listid:
@@ -206,6 +226,7 @@ class AppTopoGui(tk.Frame):
             nx        = self.nxEntryVariable.get()
             ny        = self.nyEntryVariable.get()
             delta_l   = self.delta_lEntryVariable.get()
+            base_l    = self.base_lEntryVariable.get()
         except:
             print('Error while reading the parameters given by the user!')
             tk.messagebox.showerror(parent=self, title='Check parameterts', message = 'Is something wrong with the parameters (text instead of integer?)')
@@ -217,6 +238,8 @@ class AppTopoGui(tk.Frame):
         ymin = min(self.listy)
         xmax = max(self.listx)
         ymax = max(self.listy)
+        zmin = min(self.listz)
+        zmax = max(self.listz)
        
         # creating a new figure
         plt.figure()
@@ -226,8 +249,13 @@ class AppTopoGui(tk.Frame):
         yi = np.linspace(ymin, ymax, ny)
         zi = ml.griddata(self.listx, self.listy, self.listz, xi, yi)
         
+        # determining the location of the contour lines
+        
+        lev_low = list(frange(base_l,zmin,-delta_l))
+        lev_up  = list(frange(base_l+delta_l,zmax,delta_l))
+        
         # plotting of the result
-        C = plt.contour(xi, yi, zi, delta_l, linewidths = 0.5, colors = 'k')
+        C = plt.contour(xi, yi, zi, lev_low + lev_up, linewidths = 0.5, colors = 'k')
         plt.pcolormesh(xi, yi, zi, cmap = plt.get_cmap('rainbow'))
         plt.clabel(C, inline=1, fontsize=fnt_size);
              
@@ -255,6 +283,7 @@ class AppTopoGui(tk.Frame):
         # showinf the final figure
         plt.show()
 
+    ## Saving the map in memory
     def save_map(self):
         
         ## checking if a map is stored in memory
@@ -299,7 +328,7 @@ class AppTopoGui(tk.Frame):
         lenght_axis_y = (self.ylim_max - self.ylim_min) * 100.0
         
         # determine the current scale
-        scale_x = width / lenght_axis_x
+        scale_x = width  / lenght_axis_x
         scale_y = height / lenght_axis_y
         print('initial scale x =', scale_x)
         print('initial scale y =', scale_y)
@@ -325,7 +354,7 @@ class AppTopoGui(tk.Frame):
         plt.close()
         self.draw_map()
 
-# Main function        
+## Main function        
 def main():
     root = tk.Tk()
     AppTopoGui(root)
