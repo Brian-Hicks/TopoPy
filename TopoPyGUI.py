@@ -1,10 +1,12 @@
+#!/usr/bin/env python
+
 # TopoPy GUI
 #
 # A Python-based topographic drawings software.
 # This software is released under the Apache 2.0 License.
 #
 # Author: Johan Barthelemy
-# Date: June 2015
+# Date: July 2015
 # Version: 1
 
 ## Import section
@@ -15,7 +17,7 @@ import csv
 import tkinter as tk
 from tkinter.filedialog import askopenfilename, asksaveasfilename
 import tkinter.messagebox
-import os
+import platform
 
 ## a range function for float
 def frange(x, y, jump):
@@ -39,7 +41,8 @@ class AppTopoGui(tk.Frame):
         tk.Frame.__init__(self, parent)
         self.parent = parent
         self.parent.title('TopoPy')
-        self.parent.iconbitmap('application_edit.ico')
+        if platform.system() == 'Windows':
+            self.parent.iconbitmap('application_edit.ico')
         
         self.listx  = []     # list of ids 
         self.listy  = []     # list containing the x coordinates of the points
@@ -74,10 +77,10 @@ class AppTopoGui(tk.Frame):
         
         # ... creating the radio buttons for selecting the image dpi
         self.dpiVar = tk.IntVar()
-        tk.Radiobutton(self, text="100", padx = 20, variable=self.dpiVar, value=100).grid(column=1,row=2)
-        tk.Radiobutton(self, text="150", padx = 20, variable=self.dpiVar, value=150).grid(column=2,row=2)
-        tk.Radiobutton(self, text="300", padx = 20, variable=self.dpiVar, value=300).grid(column=3,row=2)
-        self.dpiVar.set(150)
+        tk.Radiobutton(self, text="150", padx = 20, variable=self.dpiVar, value=150).grid(column=1,row=2)
+        tk.Radiobutton(self, text="300", padx = 20, variable=self.dpiVar, value=300).grid(column=2,row=2)
+        tk.Radiobutton(self, text="600", padx = 20, variable=self.dpiVar, value=600).grid(column=3,row=2)
+        self.dpiVar.set(600)
         
         # ... creation label plot ids
         plotIdsLabel = tk.Label(self, text="Show points id:")
@@ -287,11 +290,13 @@ class AppTopoGui(tk.Frame):
     def save_map(self):
         
         ## checking if a map is stored in memory
+        
         if len(plt.get_fignums()) == 0:
             tk.messagebox.showinfo(parent=self, title='No map to save!', message='You must draw a map before saving it!')
             return None
 
         ## checking user input
+        
         try:
             scale = self.scaleEntryVariable.get()
         except:
@@ -300,6 +305,7 @@ class AppTopoGui(tk.Frame):
             return None
 
         ## determining output file name
+        
         options = {}
         options['filetypes'] = [('png files', '.png')]
         options['initialfile'] = 'map.png'
