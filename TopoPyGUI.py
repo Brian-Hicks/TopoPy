@@ -194,6 +194,9 @@ class AppTopoGui(tk.Frame):
         
         # getting input file name and path
         self.csvfilename = askopenfilename();
+        if(self.csvfilename == ''):
+            return None
+        
         print(self.csvfilename)
         
         # resetting data
