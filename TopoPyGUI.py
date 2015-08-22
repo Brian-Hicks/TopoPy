@@ -9,15 +9,19 @@
 # Date: July 2015
 # Version: 1
 
+# TODO: if only 2 data point (x and y), then just draw a line, it is a part of a building (thicker line, colored?)
+#       quite easy to do: try to read first the z coordinate, then if it is a letter, draw the convex hull of the (filled in black or dotted)
+
 ## Import section
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.mlab as ml
 import csv
-import tkinter as tk
-from tkinter.filedialog import askopenfilename, asksaveasfilename
 import tkinter.messagebox
+import tkinter as tk
 import platform
+from scipy.interpolate import griddata
+from tkinter.filedialog import askopenfilename, asksaveasfilename
 
 ## a range function for float
 def frange(x, y, jump):
@@ -149,17 +153,27 @@ class AppTopoGui(tk.Frame):
         self.nyEntry.grid(column=3, row=8, columnspan=1,sticky='E'+'W')
         self.nyEntryVariable.set("500")
         
+        # ... creating the label for the interpolation method
+        interpMethodLabel = tk.Label(self, text="Interpolation method:", anchor="center")
+        interpMethodLabel.grid(column=0, row=9, sticky='E')
+        
+        # ... creating the radio buttons for selecting the interpolation methode
+        self.interpMethodVar = tk.StringVar()
+        tk.Radiobutton(self, text="linear", padx = 20, variable=self.interpMethodVar, value="linear").grid(column=1,row=9)
+        tk.Radiobutton(self, text="cubic", padx = 20, variable=self.interpMethodVar, value="cubic").grid(column=2,row=9)
+        self.interpMethodVar.set("cubic")
+        
         # ... creation draw button
         drawButton = tk.Button(self, text="Draw map", command=self.draw_map)
-        drawButton.grid(column=0, row=9, columnspan=4, sticky='E'+'W')
+        drawButton.grid(column=0, row=10, columnspan=4, sticky='E'+'W')
                 
         # ... creation save button
         saveButton = tk.Button(self, text="Save", command=self.save_map)
-        saveButton.grid(column=0,row=10,columnspan=4,sticky='E'+'W')        
+        saveButton.grid(column=0,row=11,columnspan=4,sticky='E'+'W')        
         
         # ... creation bouton quit
         quitButton = tk.Button(self, text="Quit",command=self.quit_app)
-        quitButton.grid(column=0,row=11,columnspan=4,sticky='E'+'W')
+        quitButton.grid(column=0,row=12,columnspan=4,sticky='E'+'W')
                 
         # empeche de redimensionner verticalement
         self.parent.resizable(False, False)
@@ -253,7 +267,11 @@ class AppTopoGui(tk.Frame):
         # interpolation
         xi = np.linspace(xmin, xmax, nx)
         yi = np.linspace(ymin, ymax, ny)
-        zi = ml.griddata(self.listx, self.listy, self.listz, xi, yi)
+        
+        X,Y= np.meshgrid(xi,yi)
+        
+        #zi = griddata((self.listx, self.listy), self.listz, (xi[None,:], yi[:,None]), method=self.interpMethodVar.get())
+        zi = griddata((self.listx, self.listy), self.listz, (X, Y), method=self.interpMethodVar.get())        
         
         # determining the location of the contour lines
         
@@ -263,6 +281,7 @@ class AppTopoGui(tk.Frame):
         # plotting of the result
         C = plt.contour(xi, yi, zi, lev_low + lev_up, linewidths = 0.5, colors = 'k')
         plt.pcolormesh(xi, yi, zi, cmap = plt.get_cmap('rainbow'))
+        plt.imshow(zi, extent=(xmin,xmax,ymin,ymax), origin='lower')
         plt.clabel(C, inline=1, fontsize=fnt_size);
              
         # legend
@@ -279,6 +298,10 @@ class AppTopoGui(tk.Frame):
         self.ylim_max = ymax + extension
         plt.xlim(self.xlim_min, self.xlim_max)
         plt.ylim(self.ylim_min, self.ylim_max)
+
+        # x label
+        scale = self.scaleEntryVariable.get()
+        plt.xlabel('Scale: 1/' + str(scale))
         
         # plotting points id if requested
         if self.plotId.get() == 1:
