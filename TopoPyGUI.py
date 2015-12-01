@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+#-*- coding: utf-8 -*-
 
 # TopoPy GUI
 #
@@ -6,7 +7,7 @@
 # This software is released under the Apache 2.0 License.
 #
 # Author: Johan Barthelemy
-# Date: July 2015
+# Date: November 2015
 # Version: 1
 
 # TODO: if only 2 data point (x and y), then just draw a line, it is a part of a building (thicker line, colored?)
@@ -48,25 +49,159 @@ class AppTopoGui(tk.Frame):
         if platform.system() == 'Windows':
             self.parent.iconbitmap('application_edit.ico')
         
-        self.listx  = []     # list of ids 
-        self.listy  = []     # list containing the x coordinates of the points
-        self.listz  = []     # list containing the y coordinates of the points
-        self.listid = []     # list containing the z coordinates of the points
+        self.listx  = []            # list of ids 
+        self.listy  = []            # list containing the x coordinates of the points
+        self.listz  = []            # list containing the y coordinates of the points
+        self.listid = []            # list containing the z coordinates of the points
         
-        self.initialize_gui()
+        
+        self.read_settings()        # reading the settings        
+        self.read_trad()            # reading the traductions
+        self.initialize_menu()      # initialize the menu interface
+        self.load_trad_gui()        # settings the labels accordingly to the selected language
+        self.initialize_gui()       # drawing the gui
+        
+    
+    ## Reading the settings in the file settings.ini    
+    def read_settings(self):
+        
+        self.settings = dict()      # dictionnary containing the settings
+        
+        try:
+            with open('settings.ini','r') as csvfile:
+                filereader = csv.reader(csvfile, delimiter = "=",quotechar = " " )
+                for row in filereader:
+                    self.settings[row[0]] = row[1]
+        except IOError:
+            print('Error: Could not open the file settings.ini!')
+            tk.messagebox.showerror(parent=self, title='Error: could not read settings', message = 'Could not find settings.ini!')
+            return None
+            
+        for s, v in self.settings.items():
+            print('INFO: settings.ini:', s,'=', v)
+        
+        if 'lang' not in self.settings:
+            print('Warning: no language defined in the configuration file! Selecting english as default.')
+            self.settings['lang'] = 'en'
+    
+    ## Saving settings in the file settings.ini
+    def saving_settings(self):
+        
+        print('INFO: Saving settings')
+        
+        try:
+            with open('settings.ini','w') as file:
+                for k, v in self.settings.items():
+                    file.write(k + '=' + v + '\n')
+        except IOError:
+            print('Error: Could not write the settings in settings.ini!')
+            tk.messagebox.showerror(parent=self, title='Error: could not save settings', message = 'Could not save the settings in settings.ini!')
+            return None
+            
+    ## Load the traductions stores then in a dict trad[item][lang] = value
+    def read_trad(self):
+       
+        self.traductions = dict()   # dictionnary containing the traductions
+        
+        # reading the traductions in a file
+        try:
+            with open('trad.txt') as csvfile:
+                filereader = csv.reader(csvfile, delimiter =";",quotechar = " ")                
+                
+                for row in filereader:
+                    self.traductions[row[0]] = dict()
+                    self.traductions[row[0]]['en'] = row[1]
+                    self.traductions[row[0]]['fr'] = row[2]
+        
+        except IOError:
+            print('Error: ould not open the file trad.txt');
+            tk.messagebox.showerror(parent=self, title='Error: could not load the traductions', message = 'Could not either find trad.txt or file incomplete!')
+            self.quit_app();
+        
+        # gui langage
+        self.lang_choice = tk.StringVar()
+        self.lang_choice.set(self.settings['lang'])
+        
+        # defining the labels of the interface
+        self.loadButtonLabelTxt   = tk.StringVar()
+        self.scaleLabelTxt        = tk.StringVar()
+        self.dpiLabelTxt          = tk.StringVar()
+        self.plotIdsLabelTxt      = tk.StringVar()
+        self.yesLabelTxt          = tk.StringVar()
+        self.noLabelTxt           = tk.StringVar()
+        self.fontLabelTxt         = tk.StringVar()
+        self.base_lLabelTxt       = tk.StringVar()
+        self.delta_lLabelTxt      = tk.StringVar()
+        self.extensionLabelTxt    = tk.StringVar()
+        self.nxnyLabelTxt         = tk.StringVar()
+        self.interpMethodLabelTxt = tk.StringVar()
+        self.linearLabelTxt       = tk.StringVar()
+        self.cubicLabelTxt        = tk.StringVar()
+        self.drawButtonLabelTxt   = tk.StringVar()
+        self.saveButtonLabelTxt   = tk.StringVar()
+        self.quitButtonLabelTxt   = tk.StringVar()
+        self.languageTxt          = tk.StringVar()
 
+    ## loading the desired langage and updating the gui accordingly
+    def load_trad_gui(self, *argv):
+        
+        lang = self.lang_choice.get()
+        print('INFO: Loading gui traduction - selected language:', lang)
+        
+        # setting the values
+        self.loadButtonLabelTxt.set(self.traductions['load'][lang])
+        self.scaleLabelTxt.set(self.traductions['scale'][lang])
+        self.dpiLabelTxt.set(self.traductions['dpi'][lang])
+        self.plotIdsLabelTxt.set(self.traductions['plotIds'][lang])
+        self.yesLabelTxt.set(self.traductions['yes'][lang])
+        self.noLabelTxt.set(self.traductions['no'][lang])
+        self.fontLabelTxt.set(self.traductions['font'][lang])
+        self.base_lLabelTxt.set(self.traductions['base_l'][lang])
+        self.delta_lLabelTxt.set(self.traductions['delta_l'][lang])
+        self.extensionLabelTxt.set(self.traductions['extension'][lang])
+        self.nxnyLabelTxt.set(self.traductions['nxny'][lang])
+        self.interpMethodLabelTxt.set(self.traductions['interpMethod'][lang])
+        self.linearLabelTxt.set(self.traductions['linear'][lang])
+        self.cubicLabelTxt.set(self.traductions['cubic'][lang])
+        self.drawButtonLabelTxt.set(self.traductions['drawButton'][lang])
+        self.saveButtonLabelTxt.set(self.traductions['saveButton'][lang])
+        self.quitButtonLabelTxt.set(self.traductions['quitButton'][lang])
+        self.languageTxt.set(self.traductions['language'][lang])
+        
+        self.menu.entryconfig(1, label = self.languageTxt.get())
+        self.filemenu.entryconfig(3, label = self.quitButtonLabelTxt.get())
+        
+        self.update()
+        
+        # saving settings
+        self.settings['lang'] = lang
+        self.saving_settings()
+    
+    def initialize_menu(self):
+        
+        # ... creating menu
+        self.menu     = tk.Menu(self.parent)
+        self.filemenu = tk.Menu(self.menu, tearoff=0)
+        self.menu.add_cascade(label= self.languageTxt.get(), menu=self.filemenu)
+        self.filemenu.add_radiobutton(label="English",  command = self.load_trad_gui, var = self.lang_choice, value = 'en')
+        self.filemenu.add_radiobutton(label="Français", command = self.load_trad_gui, var = self.lang_choice, value = 'fr')
+        self.filemenu.add_separator()
+        self.filemenu.add_command(label=self.quitButtonLabelTxt.get(), command=self.quit_app)
+        
+        self.parent.config(menu=self.menu)
+        
     ## Initialize the interface
     def initialize_gui(self):
-    
+
         # layout manager
         self.grid()
         
         # ... creation load button
-        loadButton = tk.Button(self, text="Load data", command=self.load_file)
-        loadButton.grid(column=0, row=0, columnspan=4, sticky='E'+'W')
+        self.loadButton = tk.Button(self, textvariable=self.loadButtonLabelTxt, command=self.load_file)
+        self.loadButton.grid(column=0, row=0, columnspan=4, sticky='E'+'W')
                 
         # ... create label for scale
-        scaleLabel = tk.Label(self, text="Scale: 1/", anchor="center")
+        scaleLabel = tk.Label(self, textvariable=self.scaleLabelTxt, anchor="center")
         scaleLabel.grid(column=0, row=1, sticky='E')
         
         # ... create entry for scale
@@ -76,7 +211,7 @@ class AppTopoGui(tk.Frame):
         self.scaleEntryVariable.set("200")
         
         # ... create label for image dpi
-        dpiLabel = tk.Label(self, text="Resolution (dpi):")
+        dpiLabel = tk.Label(self, textvariable=self.dpiLabelTxt)
         dpiLabel.grid(column=0, row=2, sticky='E')
         
         # ... creating the radio buttons for selecting the image dpi
@@ -87,16 +222,16 @@ class AppTopoGui(tk.Frame):
         self.dpiVar.set(600)
         
         # ... creation label plot ids
-        plotIdsLabel = tk.Label(self, text="Show points id:")
+        plotIdsLabel = tk.Label(self, textvariable=self.plotIdsLabelTxt)
         plotIdsLabel.grid(column=0, row=3, sticky='E')
         
         # ... creating the radio buttons for showing/hiding points id
         self.plotId = tk.IntVar()
-        tk.Radiobutton(self, text="Yes", padx = 20, variable=self.plotId, value=1).grid(column=1,row=3)
-        tk.Radiobutton(self, text="No",  padx = 20, variable=self.plotId, value=0).grid(column=2,row=3)
+        tk.Radiobutton(self, textvariable=self.yesLabelTxt, padx = 20, variable=self.plotId, value=1).grid(column=1,row=3)
+        tk.Radiobutton(self, textvariable=self.noLabelTxt,  padx = 20, variable=self.plotId, value=0).grid(column=2,row=3)
         
         # ... create label for font size
-        fontLabel = tk.Label(self, text="Font size:", anchor="center")
+        fontLabel = tk.Label(self, textvariable=self.fontLabelTxt, anchor="center")
         fontLabel.grid(column=0, row=4, sticky='E')
         
         # ... create entry for font size
@@ -106,7 +241,7 @@ class AppTopoGui(tk.Frame):
         self.fontEntryVariable.set("10")
 
         # ... create label for base contour line
-        base_lLabel = tk.Label(self, text="Base altimetric level (meters):", anchor="center")
+        base_lLabel = tk.Label(self, textvariable=self.base_lLabelTxt, anchor="center")
         base_lLabel.grid(column=0, row=5, sticky='E')
         
         # ... create entry for base contour line
@@ -116,7 +251,7 @@ class AppTopoGui(tk.Frame):
         self.base_lEntryVariable.set("100")
 
         # ... create label for delta_l
-        delta_lLabel = tk.Label(self, text="Altimetric difference between 2 contour lines (meters):", anchor="center")
+        delta_lLabel = tk.Label(self, textvariable=self.delta_lLabelTxt, anchor="center")
         delta_lLabel.grid(column=0, row=6, sticky='E')
         
         # ... create entry for delta_l
@@ -126,7 +261,7 @@ class AppTopoGui(tk.Frame):
         self.delta_lEntryVariable.set("0.50")
         
         # ... create label for extension
-        extensionLabel = tk.Label(self, text="Minimum distance between the borders and the contour lines (meters):", anchor="center")
+        extensionLabel = tk.Label(self, textvariable=self.extensionLabelTxt, anchor="center")
         extensionLabel.grid(column=0, row=7, sticky='E')
         
         # ... create entry for extension
@@ -136,7 +271,7 @@ class AppTopoGui(tk.Frame):
         self.extensionEntryVariable.set("2")
 
         # ... create label for nx x ny
-        nxnyLabel = tk.Label(self, text="Dimension of the interpolation grid:", anchor="center")
+        nxnyLabel = tk.Label(self, textvariable=self.nxnyLabelTxt, anchor="center")
         nxnyLabel.grid(column=0, row=8, sticky='E')
         nxny2Label = tk.Label(self, text=" x ", anchor="center")
         nxny2Label.grid(column=2, row=8, sticky='E'+'W')
@@ -154,7 +289,7 @@ class AppTopoGui(tk.Frame):
         self.nyEntryVariable.set("500")
         
         # ... creating the label for the interpolation method
-        interpMethodLabel = tk.Label(self, text="Interpolation method:", anchor="center")
+        interpMethodLabel = tk.Label(self, textvariable=self.interpMethodLabelTxt, anchor="center")
         interpMethodLabel.grid(column=0, row=9, sticky='E')
         
         # ... creating the radio buttons for selecting the interpolation methode
@@ -164,32 +299,33 @@ class AppTopoGui(tk.Frame):
         self.interpMethodVar.set("cubic")
         
         # ... creation draw button
-        drawButton = tk.Button(self, text="Draw map", command=self.draw_map)
+        drawButton = tk.Button(self, textvariable=self.drawButtonLabelTxt, command=self.draw_map)
         drawButton.grid(column=0, row=10, columnspan=4, sticky='E'+'W')
                 
         # ... creation save button
-        saveButton = tk.Button(self, text="Save", command=self.save_map)
+        saveButton = tk.Button(self, textvariable=self.saveButtonLabelTxt, command=self.save_map)
         saveButton.grid(column=0,row=11,columnspan=4,sticky='E'+'W')        
         
         # ... creation bouton quit
-        quitButton = tk.Button(self, text="Quit",command=self.quit_app)
+        quitButton = tk.Button(self, textvariable=self.quitButtonLabelTxt,command=self.quit_app)
         quitButton.grid(column=0,row=12,columnspan=4,sticky='E'+'W')
                 
-        # empeche de redimensionner verticalement
+        # prevent resizing of the interface
         self.parent.resizable(False, False)
         
-        # fixe les dim de l'interface (empeche redimensionnement automatique
-        # si trop long texte dans le label
-        self.update() # rafraichit l interface pour etre certain que tout est affiche
-        self.parent.geometry(self.parent.geometry()) # fixe l interface
+        # force the interface to be redraw (be certain that everything is there)
+        self.update()
         
-        # initialise le focus sur le champ de texte et texte deja selectionne
+        # set the interface
+        self.parent.geometry(self.parent.geometry())
+        
+        # set the focus on the scale input field and already select the text
         self.scaleEntry.focus_set()
         self.scaleEntry.selection_range(0, tk.END)
        
     ## quitting the app
     def quit_app(self):
-        
+  
         plt.close('all')
         top=self.winfo_toplevel()
         top.quit()
@@ -280,7 +416,6 @@ class AppTopoGui(tk.Frame):
         
         # plotting of the result
         C = plt.contour(xi, yi, zi, lev_low + lev_up, linewidths = 0.5, colors = 'k')
-        plt.pcolormesh(xi, yi, zi, cmap = plt.get_cmap('rainbow'))
         plt.imshow(zi, extent=(xmin,xmax,ymin,ymax), origin='lower')
         plt.clabel(C, inline=1, fontsize=fnt_size);
              
@@ -389,7 +524,7 @@ class AppTopoGui(tk.Frame):
 ## Main function        
 def main():
     root = tk.Tk()
-    AppTopoGui(root)
+    app = AppTopoGui(root)
     root.mainloop()
     plt.close('all')
     
