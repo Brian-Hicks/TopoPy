@@ -7,11 +7,18 @@
 # This software is released under the Apache 2.0 License.
 #
 # Author: Johan Barthelemy
-# Date: November 2015
-# Version: 1
+# Date: December 2015
+# Version: 7
 
 # TODO: if only 2 data point (x and y), then just draw a line, it is a part of a building (thicker line, colored?)
 #       quite easy to do: try to read first the z coordinate, then if it is a letter, draw the convex hull of the (filled in black or dotted)
+#       see http://stackoverflow.com/questions/21727199/python-convex-hull-with-scipy-spatial-delaunay-how-to-eleminate-points-inside-t
+#       http://scipy.github.io/devdocs/generated/scipy.spatial.ConvexHull.html
+# todo: print button directly in the interface, see http://stackoverflow.com/questions/12723818/print-to-standard-printer-from-python
+#       and http://stackoverflow.com/questions/2316368/how-do-i-print-to-the-oss-default-printer-in-python-3-cross-platform
+#       and http://timgolden.me.uk/python/win32_how_do_i/print.html
+#       maybe need to switch to Qt ??? see http://www.blog.pythonlibrary.org/2013/04/16/pyside-standard-dialogs-and-message-boxes/
+#                                      and http://stackoverflow.com/questions/18999602/error-printing-image-in-pyqt
 
 ## Import section
 import numpy as np
@@ -23,6 +30,14 @@ import tkinter as tk
 import platform
 from scipy.interpolate import griddata
 from tkinter.filedialog import askopenfilename, asksaveasfilename
+
+## check if a given string represent a float
+def isFloat(s):
+    try: 
+        float(s)
+        return True
+    except ValueError:
+        return False
 
 ## a range function for float
 def frange(x, y, jump):
@@ -54,6 +69,7 @@ class AppTopoGui(tk.Frame):
         self.listz  = []            # list containing the y coordinates of the points
         self.listid = []            # list containing the z coordinates of the points
         
+        self.bat  = dict()          # dict containing the list of the buildings points
         
         self.read_settings()        # reading the settings        
         self.read_trad()            # reading the traductions
@@ -145,6 +161,7 @@ class AppTopoGui(tk.Frame):
     ## loading the desired langage and updating the gui accordingly
     def load_trad_gui(self, *argv):
         
+        # getting the current langage
         lang = self.lang_choice.get()
         print('INFO: Loading gui traduction - selected language:', lang)
         
@@ -171,6 +188,7 @@ class AppTopoGui(tk.Frame):
         self.menu.entryconfig(1, label = self.languageTxt.get())
         self.filemenu.entryconfig(3, label = self.quitButtonLabelTxt.get())
         
+        # refresh the interface
         self.update()
         
         # saving settings
@@ -292,10 +310,10 @@ class AppTopoGui(tk.Frame):
         interpMethodLabel = tk.Label(self, textvariable=self.interpMethodLabelTxt, anchor="center")
         interpMethodLabel.grid(column=0, row=9, sticky='E')
         
-        # ... creating the radio buttons for selecting the interpolation methode
+        # ... creating the radio buttons for selecting the interpolation method
         self.interpMethodVar = tk.StringVar()
-        tk.Radiobutton(self, text="linear", padx = 20, variable=self.interpMethodVar, value="linear").grid(column=1,row=9)
-        tk.Radiobutton(self, text="cubic", padx = 20, variable=self.interpMethodVar, value="cubic").grid(column=2,row=9)
+        tk.Radiobutton(self, textvariable=self.linearLabelTxt, padx = 20, variable=self.interpMethodVar, value="linear").grid(column=1,row=9)
+        tk.Radiobutton(self, textvariable=self.cubicLabelTxt,  padx = 20, variable=self.interpMethodVar, value="cubic" ).grid(column=2,row=9)
         self.interpMethodVar.set("cubic")
         
         # ... creation draw button
@@ -317,7 +335,7 @@ class AppTopoGui(tk.Frame):
         self.update()
         
         # set the interface
-        self.parent.geometry(self.parent.geometry())
+        #self.parent.geometry(self.parent.geometry())
         
         # set the focus on the scale input field and already select the text
         self.scaleEntry.focus_set()
@@ -338,6 +356,7 @@ class AppTopoGui(tk.Frame):
         self.listx.clear()
         self.listy.clear()
         self.listz.clear()
+        self.bat.clear()
     
     ## loading a map
     def load_file(self):
@@ -354,18 +373,31 @@ class AppTopoGui(tk.Frame):
         
         # reading file
         with open(self.csvfilename,'r') as csvfile:
-            filereader = csv.reader(csvfile, delimiter = "\t",quotechar = " " )
+            filereader = csv.reader(csvfile, delimiter = "\t",quotechar = " ")
             for row in filereader:
                 try:
-                    self.listid.append(str(row[0]))
-                    self.listx.append(float(row[1]))
-                    self.listy.append(float(row[2]))
-                    self.listz.append(float(row[3]))
+                    if isFloat(row[3]):
+                        self.listid.append(str(row[0]))
+                        self.listx.append(float(row[1]))
+                        self.listy.append(float(row[2]))
+                        self.listz.append(float(row[3]))
+                    else:
+                        print("Reading a batiment point!")                        
+                        if row[3] not in self.bat:
+                            self.bat[row[3]] = list()
+
+                            
+                        self.bat[row[3]].append( [float(row[1]), float(row[2])] )
+                    
                 except:
                     self.clear_data()
                     print('Error while reading input file... maybe something wrong with it?')
                     tk.messagebox.showerror(parent=self, title='Error while reading input file', message = 'Maybe something is wrong with the input file?')
                     return None
+    
+        #for k, v in self.bat.items():
+        #    print('bat ', k, v)
+            
     
     ## drawing the current map
     def draw_map(self):
