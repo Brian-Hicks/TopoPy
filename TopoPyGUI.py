@@ -8,12 +8,8 @@
 #
 # Author: Johan Barthelemy
 # Date: December 2015
-# Version: 7
+# Version: 8
 
-# TODO: if only 2 data point (x and y), then just draw a line, it is a part of a building (thicker line, colored?)
-#       quite easy to do: try to read first the z coordinate, then if it is a letter, draw the convex hull of the (filled in black or dotted)
-#       see http://stackoverflow.com/questions/21727199/python-convex-hull-with-scipy-spatial-delaunay-how-to-eleminate-points-inside-t
-#       http://scipy.github.io/devdocs/generated/scipy.spatial.ConvexHull.html
 # todo: print button directly in the interface, see http://stackoverflow.com/questions/12723818/print-to-standard-printer-from-python
 #       and http://stackoverflow.com/questions/2316368/how-do-i-print-to-the-oss-default-printer-in-python-3-cross-platform
 #       and http://timgolden.me.uk/python/win32_how_do_i/print.html
