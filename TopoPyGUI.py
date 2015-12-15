@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #-*- coding: utf-8 -*-
 
 # TopoPy GUI
@@ -29,7 +29,9 @@ import tkinter.messagebox
 import tkinter as tk
 import platform
 from scipy.interpolate import griddata
+from scipy.spatial import ConvexHull
 from tkinter.filedialog import askopenfilename, asksaveasfilename
+from matplotlib.patches import Polygon
 
 ## check if a given string represent a float
 def isFloat(s):
@@ -121,8 +123,8 @@ class AppTopoGui(tk.Frame):
         
         # reading the traductions in a file
         try:
-            with open('trad.txt') as csvfile:
-                filereader = csv.reader(csvfile, delimiter =";",quotechar = " ")                
+            with open('trad.txt', encoding = "ISO-8859-1") as csvfile:
+                filereader = csv.reader(csvfile, delimiter = ";",quotechar = " ")                
                 
                 for row in filereader:
                     self.traductions[row[0]] = dict()
@@ -131,7 +133,7 @@ class AppTopoGui(tk.Frame):
         
         except IOError:
             print('Error: ould not open the file trad.txt');
-            tk.messagebox.showerror(parent=self, title='Error: could not load the traductions', message = 'Could not either find trad.txt or file incomplete!')
+            tk.messagebox.showerror(parent = self, title = 'Error: could not load the traductions', message = 'Could not either find trad.txt or file incomplete!')
             self.quit_app();
         
         # gui langage
@@ -333,10 +335,7 @@ class AppTopoGui(tk.Frame):
         
         # force the interface to be redraw (be certain that everything is there)
         self.update()
-        
-        # set the interface
-        #self.parent.geometry(self.parent.geometry())
-        
+               
         # set the focus on the scale input field and already select the text
         self.scaleEntry.focus_set()
         self.scaleEntry.selection_range(0, tk.END)
@@ -385,8 +384,6 @@ class AppTopoGui(tk.Frame):
                         print("Reading a batiment point!")                        
                         if row[3] not in self.bat:
                             self.bat[row[3]] = list()
-
-                            
                         self.bat[row[3]].append( [float(row[1]), float(row[2])] )
                     
                 except:
@@ -394,10 +391,6 @@ class AppTopoGui(tk.Frame):
                     print('Error while reading input file... maybe something wrong with it?')
                     tk.messagebox.showerror(parent=self, title='Error while reading input file', message = 'Maybe something is wrong with the input file?')
                     return None
-    
-        #for k, v in self.bat.items():
-        #    print('bat ', k, v)
-            
     
     ## drawing the current map
     def draw_map(self):
@@ -435,14 +428,10 @@ class AppTopoGui(tk.Frame):
         # interpolation
         xi = np.linspace(xmin, xmax, nx)
         yi = np.linspace(ymin, ymax, ny)
-        
-        X,Y= np.meshgrid(xi,yi)
-        
-        #zi = griddata((self.listx, self.listy), self.listz, (xi[None,:], yi[:,None]), method=self.interpMethodVar.get())
+        X,Y = np.meshgrid(xi,yi)        
         zi = griddata((self.listx, self.listy), self.listz, (X, Y), method=self.interpMethodVar.get())        
         
-        # determining the location of the contour lines
-        
+        # determining the location of the contour lines        
         lev_low = list(frange(base_l,zmin,-delta_l))
         lev_up  = list(frange(base_l+delta_l,zmax,delta_l))
         
@@ -457,6 +446,18 @@ class AppTopoGui(tk.Frame):
         # plotting the data points
         plt.scatter(self.listx, self.listy, marker = 'o', c = 'b', s = 5, zorder = 10)
         
+        # plotting the building by determining their convex hull
+        for b, list_coord in self.bat.items():
+            print("INFO: plotting building", b)
+            hull = ConvexHull(np.asarray(list_coord))
+            list_coord_hull = list()
+                
+            for v in hull.vertices:
+                list_coord_hull.append(list_coord[v])
+                            
+            ax = plt.subplot()
+            ax.add_patch(Polygon(list_coord_hull, closed = True, fill= False, hatch='///'))
+                                       
         # plot axis settings
         plt.axis('equal')
         self.xlim_min = xmin - extension
