@@ -8,13 +8,7 @@
 #
 # Author: Johan Barthelemy
 # Date: December 2015
-# Version: 8
-
-# todo: print button directly in the interface, see http://stackoverflow.com/questions/12723818/print-to-standard-printer-from-python
-#       and http://stackoverflow.com/questions/2316368/how-do-i-print-to-the-oss-default-printer-in-python-3-cross-platform
-#       and http://timgolden.me.uk/python/win32_how_do_i/print.html
-#       maybe need to switch to Qt ??? see http://www.blog.pythonlibrary.org/2013/04/16/pyside-standard-dialogs-and-message-boxes/
-#                                      and http://stackoverflow.com/questions/18999602/error-printing-image-in-pyqt
+# Version: 8.1
 
 ## Import section
 import numpy as np
@@ -29,7 +23,7 @@ from scipy.spatial import ConvexHull
 from tkinter.filedialog import askopenfilename, asksaveasfilename
 from matplotlib.patches import Polygon
 
-## check if a given string represent a float
+## Check if a given string represent a float
 def isFloat(s):
     try: 
         float(s)
@@ -37,7 +31,7 @@ def isFloat(s):
     except ValueError:
         return False
 
-## a range function for float
+## A range function for float
 def frange(x, y, jump):
     if (x < y) and (jump > 0):
         while x < y:
@@ -137,24 +131,27 @@ class AppTopoGui(tk.Frame):
         self.lang_choice.set(self.settings['lang'])
         
         # defining the labels of the interface
-        self.loadButtonLabelTxt   = tk.StringVar()
-        self.scaleLabelTxt        = tk.StringVar()
-        self.dpiLabelTxt          = tk.StringVar()
-        self.plotIdsLabelTxt      = tk.StringVar()
-        self.yesLabelTxt          = tk.StringVar()
-        self.noLabelTxt           = tk.StringVar()
-        self.fontLabelTxt         = tk.StringVar()
-        self.base_lLabelTxt       = tk.StringVar()
-        self.delta_lLabelTxt      = tk.StringVar()
-        self.extensionLabelTxt    = tk.StringVar()
-        self.nxnyLabelTxt         = tk.StringVar()
-        self.interpMethodLabelTxt = tk.StringVar()
-        self.linearLabelTxt       = tk.StringVar()
-        self.cubicLabelTxt        = tk.StringVar()
-        self.drawButtonLabelTxt   = tk.StringVar()
-        self.saveButtonLabelTxt   = tk.StringVar()
-        self.quitButtonLabelTxt   = tk.StringVar()
-        self.languageTxt          = tk.StringVar()
+        self.loadButtonLabelTxt         = tk.StringVar()
+        self.scaleLabelTxt              = tk.StringVar()
+        self.dpiLabelTxt                = tk.StringVar()
+        self.plotIdsLabelTxt            = tk.StringVar()
+        self.yesLabelTxt                = tk.StringVar()
+        self.noLabelTxt                 = tk.StringVar()
+        self.fontLabelTxt               = tk.StringVar()
+        self.base_lLabelTxt             = tk.StringVar()
+        self.delta_lLabelTxt            = tk.StringVar()
+        self.extensionLabelTxt          = tk.StringVar()
+        self.nxnyLabelTxt               = tk.StringVar()
+        self.interpMethodLabelTxt       = tk.StringVar()
+        self.linearLabelTxt             = tk.StringVar()
+        self.cubicLabelTxt              = tk.StringVar()
+        self.buildingSortMethodLabelTxt = tk.StringVar()
+        self.userLabelTxt               = tk.StringVar()
+        self.convexHullLabelTxt         = tk.StringVar()
+        self.drawButtonLabelTxt         = tk.StringVar()
+        self.saveButtonLabelTxt         = tk.StringVar()
+        self.quitButtonLabelTxt         = tk.StringVar()
+        self.languageTxt                = tk.StringVar()
 
     ## loading the desired langage and updating the gui accordingly
     def load_trad_gui(self, *argv):
@@ -178,6 +175,11 @@ class AppTopoGui(tk.Frame):
         self.interpMethodLabelTxt.set(self.traductions['interpMethod'][lang])
         self.linearLabelTxt.set(self.traductions['linear'][lang])
         self.cubicLabelTxt.set(self.traductions['cubic'][lang])
+        self.buildingSortMethodLabelTxt.set(self.traductions['buildingSortMethod'][lang])
+        
+        self.userLabelTxt.set(self.traductions['userDefined'][lang])
+        self.convexHullLabelTxt.set(self.traductions['convexHull'][lang])
+        
         self.drawButtonLabelTxt.set(self.traductions['drawButton'][lang])
         self.saveButtonLabelTxt.set(self.traductions['saveButton'][lang])
         self.quitButtonLabelTxt.set(self.traductions['quitButton'][lang])
@@ -204,6 +206,7 @@ class AppTopoGui(tk.Frame):
         self.filemenu.add_separator()
         self.filemenu.add_command(label=self.quitButtonLabelTxt.get(), command=self.quit_app)
         
+        # ... adding the menu
         self.parent.config(menu=self.menu)
         
     ## Initialize the interface
@@ -292,13 +295,13 @@ class AppTopoGui(tk.Frame):
         nxny2Label = tk.Label(self, text=" x ", anchor="center")
         nxny2Label.grid(column=2, row=8, sticky='E'+'W')
         
-        # ... create entry for nx
+        # ... creating entry for nx
         self.nxEntryVariable = tk.IntVar()
         self.nxEntry = tk.Entry(self, textvariable=self.nxEntryVariable)
         self.nxEntry.grid(column=1, row=8, columnspan=1,sticky='E'+'W')
         self.nxEntryVariable.set("500")
         
-        # ... create entry for ny
+        # ... creating entry for ny
         self.nyEntryVariable = tk.IntVar()
         self.nyEntry = tk.Entry(self, textvariable=self.nyEntryVariable)
         self.nyEntry.grid(column=3, row=8, columnspan=1,sticky='E'+'W')
@@ -310,21 +313,31 @@ class AppTopoGui(tk.Frame):
         
         # ... creating the radio buttons for selecting the interpolation method
         self.interpMethodVar = tk.StringVar()
-        tk.Radiobutton(self, textvariable=self.linearLabelTxt, padx = 20, variable=self.interpMethodVar, value="linear").grid(column=1,row=9)
-        tk.Radiobutton(self, textvariable=self.cubicLabelTxt,  padx = 20, variable=self.interpMethodVar, value="cubic" ).grid(column=2,row=9)
+        tk.Radiobutton(self, textvariable=self.linearLabelTxt, padx = 20, variable=self.interpMethodVar, value="linear").grid(column=1,row=9,sticky='W')
+        tk.Radiobutton(self, textvariable=self.cubicLabelTxt,  padx = 20, variable=self.interpMethodVar, value="cubic" ).grid(column=2,row=9,columnspan=2,sticky='W')
         self.interpMethodVar.set("cubic")
         
-        # ... creation draw button
-        drawButton = tk.Button(self, textvariable=self.drawButtonLabelTxt, command=self.draw_map)
-        drawButton.grid(column=0, row=10, columnspan=4, sticky='E'+'W')
-                
-        # ... creation save button
-        saveButton = tk.Button(self, textvariable=self.saveButtonLabelTxt, command=self.save_map)
-        saveButton.grid(column=0,row=11,columnspan=4,sticky='E'+'W')        
+        # ... creating the label for the building points sorting method
+        buildingSortMethodLabel = tk.Label(self, textvariable=self.buildingSortMethodLabelTxt, anchor="center")
+        buildingSortMethodLabel.grid(column=0, row=10, sticky='E')
         
-        # ... creation bouton quit
+        # ... creating the radio buttons for selecting the method to sort the buildings' points
+        self.buildingSortMethodVar = tk.StringVar()
+        tk.Radiobutton(self, textvariable=self.userLabelTxt,       padx = 20, variable=self.buildingSortMethodVar, value="user").grid(column=1,row=10,sticky='W')
+        tk.Radiobutton(self, textvariable=self.convexHullLabelTxt, padx = 20, variable=self.buildingSortMethodVar, value="convex_hull").grid(column=2,columnspan=2,sticky='W',row=10)
+        self.buildingSortMethodVar.set("user")
+        
+        # ... creating draw button
+        drawButton = tk.Button(self, textvariable=self.drawButtonLabelTxt, command=self.draw_map)
+        drawButton.grid(column=0, row=11, columnspan=4, sticky='E'+'W')
+                
+        # ... creating save button
+        saveButton = tk.Button(self, textvariable=self.saveButtonLabelTxt, command=self.save_map)
+        saveButton.grid(column=0,row=12,columnspan=4,sticky='E'+'W')        
+        
+        # ... creating bouton quit
         quitButton = tk.Button(self, textvariable=self.quitButtonLabelTxt,command=self.quit_app)
-        quitButton.grid(column=0,row=12,columnspan=4,sticky='E'+'W')
+        quitButton.grid(column=0,row=13,columnspan=4,sticky='E'+'W')
                 
         # prevent resizing of the interface
         self.parent.resizable(False, False)
@@ -442,17 +455,19 @@ class AppTopoGui(tk.Frame):
         # plotting the data points
         plt.scatter(self.listx, self.listy, marker = 'o', c = 'b', s = 5, zorder = 10)
         
-        # plotting the building by determining their convex hull
+        # plotting the building by determining their convex hull or using the order defined by the user in the data
         for b, list_coord in self.bat.items():
             print("INFO: plotting building", b)
-            hull = ConvexHull(np.asarray(list_coord))
-            list_coord_hull = list()
-                
-            for v in hull.vertices:
-                list_coord_hull.append(list_coord[v])
-                            
+            
             ax = plt.subplot()
-            ax.add_patch(Polygon(list_coord_hull, closed = True, fill= False, hatch='///'))
+            if self.buildingSortMethodVar.get() == "user":
+                ax.add_patch(Polygon(list_coord, closed = True, fill= False, hatch='///'))
+            else:
+                hull = ConvexHull(np.asarray(list_coord))
+                list_coord_hull = list()
+                for v in hull.vertices:
+                    list_coord_hull.append(list_coord[v])                
+                ax.add_patch(Polygon(list_coord_hull, closed = True, fill= False, hatch='///'))
                                        
         # plot axis settings
         plt.axis('equal')

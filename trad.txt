@@ -16,4 +16,7 @@ yes;yes;oui
 no;no;non
 linear;linear;linéaire
 cubic;cubic;cubique
+buildingSortMethod;Sorting of the buildings' coordinate points;Tri des points des bâtiments
+userDefined;user defined;défini par le jeu de données
+convexHull;using the convex hull;calcul de l'enveloppe convexe
 language;Language;Langue
