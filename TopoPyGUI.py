@@ -54,7 +54,10 @@ class AppTopoGui(tk.Frame):
         self.parent = parent
         self.parent.title('TopoPy')
         if platform.system() == 'Windows':
-            self.parent.iconbitmap('application_edit.ico')
+            try:
+                self.parent.iconbitmap('application_edit.ico')
+            except Exception:
+                print('Warning: could not find the interface icon!')
         
         self.listx  = []            # list of ids 
         self.listy  = []            # list containing the x coordinates of the points
@@ -69,7 +72,6 @@ class AppTopoGui(tk.Frame):
         self.load_trad_gui()        # settings the labels accordingly to the selected language
         self.initialize_gui()       # drawing the gui
         
-    
     ## Reading the settings in the file settings.ini    
     def read_settings(self):
         
