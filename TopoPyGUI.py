@@ -481,8 +481,8 @@ class AppTopoGui(tk.Frame):
         plt.ylim(self.ylim_min, self.ylim_max)
 
         # x label
-        scale = self.scaleEntryVariable.get()
-        plt.xlabel('Scale: 1/' + str(scale))
+        # scale = self.scaleEntryVariable.get()
+        # plt.xlabel('Scale: 1/' + str(scale))
         
         # plotting points id if requested
         if self.plotId.get() == 1:
