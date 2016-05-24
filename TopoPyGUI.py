@@ -7,8 +7,8 @@
 # This software is released under the Apache 2.0 License.
 #
 # Author: Johan Barthelemy
-# Date: December 2015
-# Version: 8.1
+# Date: May 2016
+# Version: 8.5
 
 ## Import section
 import numpy as np
@@ -124,7 +124,7 @@ class AppTopoGui(tk.Frame):
                     self.traductions[row[0]]['fr'] = row[2]
         
         except IOError:
-            print('Error: ould not open the file trad.txt');
+            print('Error: could not open the file trad.txt');
             tk.messagebox.showerror(parent = self, title = 'Error: could not load the traductions', message = 'Could not either find trad.txt or file incomplete!')
             self.quit_app();
         
@@ -150,10 +150,23 @@ class AppTopoGui(tk.Frame):
         self.buildingSortMethodLabelTxt = tk.StringVar()
         self.userLabelTxt               = tk.StringVar()
         self.convexHullLabelTxt         = tk.StringVar()
+        self.gradientLabelTxt           = tk.StringVar()
         self.drawButtonLabelTxt         = tk.StringVar()
         self.saveButtonLabelTxt         = tk.StringVar()
         self.quitButtonLabelTxt         = tk.StringVar()
         self.languageTxt                = tk.StringVar()
+        
+        # errors messages
+        self.err_save               = tk.StringVar()
+        self.err_save_title         = tk.StringVar();
+        self.err_save_no_map        = tk.StringVar()
+        self.err_save_no_map_title  = tk.StringVar()
+        self.err_draw_param         = tk.StringVar()
+        self.err_draw_param_title   = tk.StringVar()
+        self.err_draw_no_data       = tk.StringVar()
+        self.err_draw_no_data_title = tk.StringVar()
+        self.err_input_file         = tk.StringVar()
+        self.err_input_file_title   = tk.StringVar()
 
     ## loading the desired langage and updating the gui accordingly
     def load_trad_gui(self, *argv):
@@ -165,30 +178,42 @@ class AppTopoGui(tk.Frame):
         # setting the values
         self.loadButtonLabelTxt.set(self.traductions['load'][lang])
         self.scaleLabelTxt.set(self.traductions['scale'][lang])
-        self.dpiLabelTxt.set(self.traductions['dpi'][lang])
-        self.plotIdsLabelTxt.set(self.traductions['plotIds'][lang])
+        self.dpiLabelTxt.set(self.traductions['dpi'][lang] + '  ')
+        self.plotIdsLabelTxt.set(self.traductions['plotIds'][lang] + '  ')
         self.yesLabelTxt.set(self.traductions['yes'][lang])
         self.noLabelTxt.set(self.traductions['no'][lang])
-        self.fontLabelTxt.set(self.traductions['font'][lang])
-        self.base_lLabelTxt.set(self.traductions['base_l'][lang])
-        self.delta_lLabelTxt.set(self.traductions['delta_l'][lang])
-        self.extensionLabelTxt.set(self.traductions['extension'][lang])
-        self.nxnyLabelTxt.set(self.traductions['nxny'][lang])
-        self.interpMethodLabelTxt.set(self.traductions['interpMethod'][lang])
+        self.fontLabelTxt.set(self.traductions['font'][lang] + '  ')
+        self.base_lLabelTxt.set(self.traductions['base_l'][lang] + '  ')
+        self.delta_lLabelTxt.set(self.traductions['delta_l'][lang] + '  ')
+        self.extensionLabelTxt.set(self.traductions['extension'][lang] + '  ')
+        self.nxnyLabelTxt.set(self.traductions['nxny'][lang] + '  ')
+        self.interpMethodLabelTxt.set(self.traductions['interpMethod'][lang] + '  ')
         self.linearLabelTxt.set(self.traductions['linear'][lang])
         self.cubicLabelTxt.set(self.traductions['cubic'][lang])
-        self.buildingSortMethodLabelTxt.set(self.traductions['buildingSortMethod'][lang])
-        
+        self.buildingSortMethodLabelTxt.set(self.traductions['buildingSortMethod'][lang] + '  ')
         self.userLabelTxt.set(self.traductions['userDefined'][lang])
         self.convexHullLabelTxt.set(self.traductions['convexHull'][lang])
-        
+        self.gradientLabelTxt.set(self.traductions['gradient'][lang] + '  ')
         self.drawButtonLabelTxt.set(self.traductions['drawButton'][lang])
         self.saveButtonLabelTxt.set(self.traductions['saveButton'][lang])
         self.quitButtonLabelTxt.set(self.traductions['quitButton'][lang])
         self.languageTxt.set(self.traductions['language'][lang])
         
+        # setting the menu
         self.menu.entryconfig(1, label = self.languageTxt.get())
         self.filemenu.entryconfig(3, label = self.quitButtonLabelTxt.get())
+        
+        # setting the errors messages
+        self.err_save.set(self.traductions['err_save'][lang])
+        self.err_save_title.set(self.traductions['err_save_title'][lang])
+        self.err_save_no_map.set(self.traductions['err_save_no_map'][lang])
+        self.err_save_no_map_title.set(self.traductions['err_save_no_map_title'][lang])
+        self.err_draw_param.set(self.traductions['err_draw_param'][lang])
+        self.err_draw_param_title.set(self.traductions['err_draw_param_title'][lang])
+        self.err_draw_no_data.set(self.traductions['err_draw_no_data'][lang])
+        self.err_draw_no_data_title.set(self.traductions['err_draw_no_data_title'][lang])
+        self.err_input_file.set(self.traductions['err_input_file'][lang])
+        self.err_input_file_title.set(self.traductions['err_input_file_title'][lang])
         
         # refresh the interface
         self.update()
@@ -236,11 +261,13 @@ class AppTopoGui(tk.Frame):
         dpiLabel.grid(column=0, row=2, sticky='E')
         
         # ... creating the radio buttons for selecting the image dpi
-        self.dpiVar = tk.IntVar()
-        tk.Radiobutton(self, text="150", padx = 20, variable=self.dpiVar, value=150).grid(column=1,row=2)
-        tk.Radiobutton(self, text="300", padx = 20, variable=self.dpiVar, value=300).grid(column=2,row=2)
-        tk.Radiobutton(self, text="600", padx = 20, variable=self.dpiVar, value=600).grid(column=3,row=2)
-        self.dpiVar.set(600)
+        self.dpiEntryVariable = tk.IntVar()
+        self.dpiEntry = tk.Entry(self, textvariable=self.dpiEntryVariable)
+        self.dpiEntry.grid(column=1, row=2, columnspan=3, sticky='E'+'W')
+        #tk.Radiobutton(self, text="150", padx = 20, variable=self.dpiEntryVariable, value=150).grid(column=1, row=2)
+        #tk.Radiobutton(self, text="300", padx = 20, variable=self.dpiEntryVariable, value=300).grid(column=2, row=2)
+        #tk.Radiobutton(self, text="600", padx = 20, variable=self.dpiEntryVariable, value=600).grid(column=3, row=2)
+        self.dpiEntryVariable.set(600)
         
         # ... creation label plot ids
         plotIdsLabel = tk.Label(self, textvariable=self.plotIdsLabelTxt)
@@ -248,8 +275,8 @@ class AppTopoGui(tk.Frame):
         
         # ... creating the radio buttons for showing/hiding points id
         self.plotId = tk.IntVar()
-        tk.Radiobutton(self, textvariable=self.yesLabelTxt, padx = 20, variable=self.plotId, value=1).grid(column=1,row=3)
-        tk.Radiobutton(self, textvariable=self.noLabelTxt,  padx = 20, variable=self.plotId, value=0).grid(column=2,row=3)
+        tk.Radiobutton(self, textvariable=self.yesLabelTxt, padx=20, variable=self.plotId, value=1).grid(column=1, row=3, sticky='W')
+        tk.Radiobutton(self, textvariable=self.noLabelTxt,  padx=20, variable=self.plotId, value=0).grid(column=2, row=3, sticky='W')
         
         # ... create label for font size
         fontLabel = tk.Label(self, textvariable=self.fontLabelTxt, anchor="center")
@@ -309,37 +336,47 @@ class AppTopoGui(tk.Frame):
         self.nyEntry.grid(column=3, row=8, columnspan=1,sticky='E'+'W')
         self.nyEntryVariable.set("500")
         
+        # ... creating the label for the gradient coloring selection
+        gradientLabel = tk.Label(self, textvariable=self.gradientLabelTxt, anchor="center")
+        gradientLabel.grid(column=0, row=9, sticky='E')
+        
+        # ... creating the radio buttons for selection the gradient coloring
+        self.gradientVariable = tk.IntVar()
+        tk.Radiobutton(self, textvariable=self.yesLabelTxt, padx=20, variable=self.gradientVariable, value=1).grid(column=1, row=9, sticky='W')
+        tk.Radiobutton(self, textvariable=self.noLabelTxt, padx=20, variable=self.gradientVariable, value=0).grid(column=2, row=9, sticky='W')
+        self.gradientVariable.set(1)
+        
         # ... creating the label for the interpolation method
         interpMethodLabel = tk.Label(self, textvariable=self.interpMethodLabelTxt, anchor="center")
-        interpMethodLabel.grid(column=0, row=9, sticky='E')
+        interpMethodLabel.grid(column=0, row=10, sticky='E')
         
         # ... creating the radio buttons for selecting the interpolation method
-        self.interpMethodVar = tk.StringVar()
-        tk.Radiobutton(self, textvariable=self.linearLabelTxt, padx = 20, variable=self.interpMethodVar, value="linear").grid(column=1,row=9,sticky='W')
-        tk.Radiobutton(self, textvariable=self.cubicLabelTxt,  padx = 20, variable=self.interpMethodVar, value="cubic" ).grid(column=2,row=9,columnspan=2,sticky='W')
-        self.interpMethodVar.set("cubic")
+        self.interpMethodVariable = tk.StringVar()
+        tk.Radiobutton(self, textvariable=self.linearLabelTxt, padx=20, variable=self.interpMethodVariable, value="linear").grid(column=1 ,row=10, sticky='W')
+        tk.Radiobutton(self, textvariable=self.cubicLabelTxt,  padx=20, variable=self.interpMethodVariable, value="cubic" ).grid(column=2, row=10, columnspan=2,sticky='W')
+        self.interpMethodVariable.set("cubic")
         
         # ... creating the label for the building points sorting method
         buildingSortMethodLabel = tk.Label(self, textvariable=self.buildingSortMethodLabelTxt, anchor="center")
-        buildingSortMethodLabel.grid(column=0, row=10, sticky='E')
+        buildingSortMethodLabel.grid(column=0, row=11, sticky='E')
         
         # ... creating the radio buttons for selecting the method to sort the buildings' points
-        self.buildingSortMethodVar = tk.StringVar()
-        tk.Radiobutton(self, textvariable=self.userLabelTxt,       padx = 20, variable=self.buildingSortMethodVar, value="user").grid(column=1,row=10,sticky='W')
-        tk.Radiobutton(self, textvariable=self.convexHullLabelTxt, padx = 20, variable=self.buildingSortMethodVar, value="convex_hull").grid(column=2,columnspan=2,sticky='W',row=10)
-        self.buildingSortMethodVar.set("user")
+        self.buildingSortMethodVariable = tk.StringVar()
+        tk.Radiobutton(self, textvariable=self.userLabelTxt,       padx=20, variable=self.buildingSortMethodVariable, value="user").grid(column=1, row=11, sticky='W')
+        tk.Radiobutton(self, textvariable=self.convexHullLabelTxt, padx=20, variable=self.buildingSortMethodVariable, value="convex_hull").grid(column=2, columnspan=2, sticky='W', row=11)
+        self.buildingSortMethodVariable.set("user")
         
         # ... creating draw button
         drawButton = tk.Button(self, textvariable=self.drawButtonLabelTxt, command=self.draw_map)
-        drawButton.grid(column=0, row=11, columnspan=4, sticky='E'+'W')
+        drawButton.grid(column=0, row=12, columnspan=4, sticky='E'+'W')
                 
         # ... creating save button
         saveButton = tk.Button(self, textvariable=self.saveButtonLabelTxt, command=self.save_map)
-        saveButton.grid(column=0,row=12,columnspan=4,sticky='E'+'W')        
+        saveButton.grid(column=0,row=13,columnspan=4,sticky='E'+'W')        
         
         # ... creating bouton quit
         quitButton = tk.Button(self, textvariable=self.quitButtonLabelTxt,command=self.quit_app)
-        quitButton.grid(column=0,row=13,columnspan=4,sticky='E'+'W')
+        quitButton.grid(column=0,row=14,columnspan=4,sticky='E'+'W')
                 
         # prevent resizing of the interface
         self.parent.resizable(False, False)
@@ -400,7 +437,7 @@ class AppTopoGui(tk.Frame):
                 except:
                     self.clear_data()
                     print('Error while reading input file... maybe something wrong with it?')
-                    tk.messagebox.showerror(parent=self, title='Error while reading input file', message = 'Maybe something is wrong with the input file?')
+                    tk.messagebox.showerror(parent=self, title=self.err_input_file_title.get(), message = self.err_input_file.get())
                     return None
     
     ## drawing the current map
@@ -408,7 +445,7 @@ class AppTopoGui(tk.Frame):
         
         if not self.listid:
             print("No data loaded!")
-            tk.messagebox.showinfo(parent=self, title='No data loaded!', message='You must load some data before drawing a map!')
+            tk.messagebox.showinfo(parent=self, title=self.err_draw_no_data_title.get(), message=self.err_draw_no_data.get())
             return None
         
         # checking user input
@@ -421,7 +458,7 @@ class AppTopoGui(tk.Frame):
             base_l    = self.base_lEntryVariable.get()
         except:
             print('Error while reading the parameters given by the user!')
-            tk.messagebox.showerror(parent=self, title='Check parameterts', message = 'Is something wrong with the parameters (text instead of integer?)')
+            tk.messagebox.showerror(parent=self, title=self.err_draw_param_title.get(), message = self.err_draw_param.get())
             return None
         
         ## plotting data
@@ -440,7 +477,7 @@ class AppTopoGui(tk.Frame):
         xi = np.linspace(xmin, xmax, nx)
         yi = np.linspace(ymin, ymax, ny)
         X,Y = np.meshgrid(xi,yi)        
-        zi = griddata((self.listx, self.listy), self.listz, (X, Y), method=self.interpMethodVar.get())        
+        zi = griddata((self.listx, self.listy), self.listz, (X, Y), method=self.interpMethodVariable.get())        
         
         # determining the location of the contour lines        
         lev_low = list(frange(base_l,zmin,-delta_l))
@@ -448,7 +485,12 @@ class AppTopoGui(tk.Frame):
         
         # plotting of the result
         C = plt.contour(xi, yi, zi, lev_low + lev_up, linewidths = 0.5, colors = 'k')
-        plt.imshow(zi, extent=(xmin,xmax,ymin,ymax), origin='lower')
+        
+        # adding a color
+        if self.gradientVariable.get() == 1:
+            plt.imshow(zi, extent=(xmin,xmax,ymin,ymax), origin='lower')
+        
+        # adding labels to contour lines
         plt.clabel(C, inline=1, fontsize=fnt_size);
              
         # legend
@@ -462,7 +504,7 @@ class AppTopoGui(tk.Frame):
             print("INFO: plotting building", b)
             
             ax = plt.subplot()
-            if self.buildingSortMethodVar.get() == "user":
+            if self.buildingSortMethodVariable.get() == "user":
                 ax.add_patch(Polygon(list_coord, closed = True, fill= False, hatch='///'))
             else:
                 hull = ConvexHull(np.asarray(list_coord))
@@ -499,18 +541,20 @@ class AppTopoGui(tk.Frame):
         ## checking if a map is stored in memory
         
         if len(plt.get_fignums()) == 0:
-            tk.messagebox.showinfo(parent=self, title='No map to save!', message='You must draw a map before saving it!')
+            print('Warning: No map to save!')
+            tk.messagebox.showinfo(parent=self, title=self.err_save_no_map_title.get(), message=self.err_save_no_map.get())
             return None
 
         ## checking user input
         
         try:
             scale = self.scaleEntryVariable.get()
+            dpi   = self.dpiEntryVariable.get()
         except:
-            print('Error while reading the scale parameter given by the user!')
-            tk.messagebox.showerror(parent=self, title='Check scale', message = 'Maybe something is wrong with the scale (text instead of integer)?')
+            print('Error while reading the scale or dpi parameter given by the user!')
+            tk.messagebox.showerror(parent=self, title=self.err_save_title.get(), message = self.err_save.get())
             return None
-
+            
         ## determining output file name
         
         options = {}
@@ -563,7 +607,7 @@ class AppTopoGui(tk.Frame):
         
         ## saving the scaled figure
         
-        fig.savefig(save_filename, dpi=self.dpiVar.get())
+        fig.savefig(save_filename, dpi=dpi)
         plt.close()
         self.draw_map()
 

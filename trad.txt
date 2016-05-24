@@ -20,3 +20,14 @@ buildingSortMethod;Sorting of the buildings' coordinate points;Tri des points de
 userDefined;user defined;défini par le jeu de données
 convexHull;using the convex hull;calcul de l'enveloppe convexe
 language;Language;Langue
+gradient;Gradient;Dégradé
+err_save;Is something wrong with the scale or dpi parameter (text instead of integer)?;Vérifiez les paramètres résolution et échelle (texte au lieu d'un nombre)?
+err_save_title;Check parameters!;Vérifiez les paramètres!
+err_save_no_map;You must draw a map before saving it!;Vous devez dessiner une carte avant de pouvoir la sauvegarder!
+err_save_no_map_title;No map to save!;Aucune carte à sauvegarder!
+err_draw_param;Is something wrong with the parameters (text instead of integer)?;Vérifiez les paramètres (texte au lieu d'un nombre)?
+err_draw_param_title;Check parameters!;Vérifiez les paramètres!
+err_draw_no_data;You must load some data before drawing a map!;Vous devez charger des données avant de dessiner une carte!
+err_draw_no_data_title;No data loaded!;Pas de données!
+err_input_file;Maybe something is wrong with the input file?;Le fichier de coordonnées ne semble pas valide.
+err_input_file_title;Error while reading input file!;Erreur lors de la lecture du fichier!
